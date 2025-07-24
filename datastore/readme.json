@@ -1,0 +1,28 @@
+{
+  "filename": "readme",
+  "superparentTag": "readme",
+  "tags": [
+    {
+      "type": "inline",
+      "name": "intro",
+      "content": "Welcome to ChunkyDB — a visual, tag-based memory database. This project enables symbolic cube mapping and cross-tagging between files."
+    },
+    {
+      "type": "nested",
+      "name": "understandingcubes",
+      "content": "There are three cubes — #x.projects.chunkydb.cubesbrief#t.maincube,nodecube,contextcube# — that organize your symbolic data."
+    },
+    {
+      "type": "nested",
+      "name": "previewmodes",
+      "content": "To understand how your data is visualized, read about #x.projects.chunkydb.previewsbrief#t.textview,tagview,satelliteview#."
+    },
+    {
+      "type": "cross",
+      "crossParentTag": "syntax",
+      "crossParentCollection": "syntaxbrief",
+      "crossTags": ["raw", "compressed"]
+    }
+  ],
+  "content": "Hi, #s.readme#t.intro#, #s.readme#t.understandingcubes#, #s.readme#t.previewmodes#."
+}

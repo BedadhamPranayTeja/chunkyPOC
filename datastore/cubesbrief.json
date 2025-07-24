@@ -1,0 +1,22 @@
+{
+  "filename": "cubesbrief",
+  "superparentTag": "cubesbrief",
+  "tags": [
+    {
+      "type": "inline",
+      "name": "maincube",
+      "content": "MainCube visualizes your Domain → Node → Files as a grid with hoverable connections to internal files."
+    },
+    {
+      "type": "inline",
+      "name": "nodecube",
+      "content": "NodeCube visualizes how each file inside a node links to tag badges and context references in deeper cubes."
+    },
+    {
+      "type": "inline",
+      "name": "contextcube",
+      "content": "ContextCube visualizes how tags and files are reused across other cubes — both superparent and crossparent references."
+    }
+  ],
+  "content": "Main: #s.cubesbrief#t.maincube#, Node: #s.cubesbrief#t.nodecube#, Context: #s.cubesbrief#t.contextcube#."
+}

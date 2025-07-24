@@ -1,0 +1,22 @@
+{
+  "filename": "previewsbrief",
+  "superparentTag": "previewsbrief",
+  "tags": [
+    {
+      "type": "inline",
+      "name": "textview",
+      "content": "Plain text output — tag contents are shown, tags themselves are hidden for smooth reading."
+    },
+    {
+      "type": "inline",
+      "name": "tagview",
+      "content": "View with symbolic tag syntax (`#s.super#t.tag#`), useful for debugging or editing files."
+    },
+    {
+      "type": "inline",
+      "name": "satelliteview",
+      "content": "Graph-like layout: center node is the selected file, all cross/nested tags orbit as linked document badges with expandable bursts."
+    }
+  ],
+  "content": "#s.previewsbrief#t.textview#, #s.previewsbrief#t.tagview#, #s.previewsbrief#t.satelliteview#."
+}

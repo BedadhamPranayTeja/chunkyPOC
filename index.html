@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ChunkyDB POC</title>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"
+    ></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="font-sans bg-gray-100 h-screen flex">
+    <!-- SIDEBAR -->
+    <aside class="w-1/5 bg-gray-900 text-white p-4 space-y-4 overflow-y-auto">
+      <div class="text-xl font-bold">MainCube: Teja</div>
+
+      <!-- Domains (auto generated) -->
+      <div id="domainList" class="text-sm space-y-2"></div>
+
+      <!-- Controls -->
+      <div class="mt-4 text-xs text-gray-400 space-y-2">
+        <button class="bg-gray-800 px-2 py-1 rounded w-full">
+          + Add Domain
+        </button>
+        <button class="bg-gray-800 px-2 py-1 rounded w-full">History</button>
+        <button class="bg-gray-800 px-2 py-1 rounded w-full">Settings</button>
+      </div>
+    </aside>
+
+    <!-- CHAT PANEL (static for now) -->
+    <main class="w-2/5 bg-gray-800 text-white p-4 flex flex-col">
+      <div class="flex-1 overflow-y-auto mb-4 text-sm space-y-2">
+        <div>[User]: Check if `feature2` aligns with `feature1`</div>
+        <div>[AI]: Working on comparison...</div>
+      </div>
+
+      <!-- Injected Tags -->
+      <div class="mb-4">
+        <h3 class="text-sm font-semibold text-gray-300 mb-1">Injected Tags:</h3>
+        <div id="injectedTags" class="flex flex-wrap gap-2 text-xs"></div>
+      </div>
+
+      <!-- Prompt Input -->
+      <div class="flex mt-auto">
+        <button class="px-3 bg-blue-600 text-white rounded-l">+</button>
+        <input
+          class="flex-1 px-3 py-1 bg-gray-700 text-white border-none"
+          placeholder="Enter prompt..."
+        />
+        <button class="ml-2 px-4 py-1 bg-green-600 hover:bg-green-500 rounded">
+          Send
+        </button>
+      </div>
+    </main>
+
+    <!-- PREVIEW PANEL -->
+    <section class="w-2/5 bg-white p-4 space-y-4 overflow-y-auto">
+      <!-- View Mode Toggle -->
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="font-semibold text-gray-700 mb-1">Preview Mode</h2>
+          <div class="space-x-2">
+            <button
+              onclick="setViewMode('satellite')"
+              class="preview-toggle bg-gray-200 px-2 py-1 text-sm rounded"
+            >
+              Satellite
+            </button>
+            <button
+              onclick="setViewMode('tag')"
+              class="preview-toggle bg-gray-200 px-2 py-1 text-sm rounded"
+            >
+              Tag
+            </button>
+            <button
+              onclick="setViewMode('text')"
+              class="preview-toggle bg-gray-200 px-2 py-1 text-sm rounded"
+            >
+              Text
+            </button>
+          </div>
+        </div>
+        <div>
+          <h2 class="text-sm text-gray-600">Cube View</h2>
+          <select
+            id="cubeViewSelect"
+            onchange="setCubeView()"
+            class="text-sm border px-2 py-1 rounded"
+          >
+            <option value="main">Main</option>
+            <option value="node">Node</option>
+            <option value="context">Context</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Preview Display -->
+      <div
+        id="previewDisplay"
+        class="min-h-32 p-3 bg-gray-50 text-sm rounded border overflow-auto whitespace-pre-wrap"
+      >
+        (select a file from sidebar)
+      </div>
+
+      <!-- File Control -->
+      <div id="fileControls" class="flex justify-between items-center hidden">
+        <h2 class="text-sm font-semibold text-gray-700">
+          File: <span id="filenameLabel"></span>
+        </h2>
+        <div class="flex gap-2 text-xs">
+          <button
+            id="editBtn"
+            onclick="enterEditMode()"
+            class="bg-gray-600 text-white px-2 py-1 rounded"
+          >
+            Edit
+          </button>
+          <div id="editActions" class="hidden gap-2 flex">
+            <button class="bg-blue-500 text-white px-2 py-1 rounded">
+              Format
+            </button>
+            <button
+              onclick="saveEdit()"
+              class="bg-green-600 text-white px-2 py-1 rounded"
+            >
+              Save
+            </button>
+            <button
+              onclick="exitEditMode()"
+              class="bg-gray-400 text-white px-2 py-1 rounded"
+            >
+              Cancel
+            </button>
+          </div>
+          <button class="bg-red-500 text-white px-2 py-1 rounded">
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid Info (Z hover) -->
+      <div id="gridInfo" class="text-xs text-gray-500">
+        <p><strong>X:</strong> <span id="x-label">Domains</span></p>
+        <p><strong>Y:</strong> <span id="y-label">Nodes</span></p>
+        <p><strong>Z:</strong> <span id="z-label">Files in Node</span></p>
+      </div>
+    </section>
+
+    <script>
+      let currentFile = null;
+      let currentView = "satellite";
+
+      const allFiles = {
+        readme: null,
+        cubesbrief: null,
+        previewsbrief: null,
+        syntaxbrief: null,
+      };
+
+      async function loadFiles() {
+        const names = Object.keys(allFiles);
+        for (let name of names) {
+          const res = await fetch(`./datastore/${name}.json`);
+          allFiles[name] = await res.json();
+        }
+        buildSidebar();
+      }
+
+      function buildSidebar() {
+        const dom = document.getElementById("domainList");
+        dom.innerHTML = `
+          <details open><summary class="cursor-pointer">projects</summary>
+            <ul class="ml-4 space-y-1 text-gray-300">
+              <li class="cursor-pointer hover:text-white" onclick="loadPreview('readme')">readme</li>
+              <li class="cursor-pointer hover:text-white" onclick="loadPreview('cubesbrief')">cubesbrief</li>
+              <li class="cursor-pointer hover:text-white" onclick="loadPreview('previewsbrief')">previewsbrief</li>
+              <li class="cursor-pointer hover:text-white" onclick="loadPreview('syntaxbrief')">syntaxbrief</li>
+            </ul>
+          </details>
+        `;
+      }
+
+      function loadPreview(name) {
+        currentFile = allFiles[name];
+        document.getElementById("filenameLabel").innerText = name + ".txt";
+        document.getElementById("fileControls").classList.remove("hidden");
+        updatePreview();
+        updateTags(currentFile.tags);
+      }
+
+      function updatePreview() {
+        if (!currentFile) return;
+        const display = document.getElementById("previewDisplay");
+        if (currentView === "satellite") {
+          display.innerHTML = `<div class="text-gray-400 italic">[Satellite Mapping Coming Soon]</div>`;
+        } else if (currentView === "text") {
+          const text = currentFile.content.replace(
+            /#s\.(.*?)#t\.(.*?)#/g,
+            (m, s, t) => {
+              const tag = currentFile.tags.find((tag) => tag.name === t);
+              return tag ? tag.content : `[missing:${t}]`;
+            }
+          );
+          display.innerText = text;
+        } else {
+          display.innerText = currentFile.content;
+        }
+      }
+
+      function updateTags(tags = []) {
+        const dom = document.getElementById("injectedTags");
+        dom.innerHTML = tags
+          .map(
+            (t) =>
+              `<span class="bg-gray-700 px-2 py-1 rounded">#${t.name}</span>`
+          )
+          .join("");
+      }
+
+      function setViewMode(mode) {
+        currentView = mode;
+        updatePreview();
+      }
+
+      function enterEditMode() {
+        document.getElementById("editBtn").classList.add("hidden");
+        document.getElementById("editActions").classList.remove("hidden");
+        setViewMode("tag");
+      }
+
+      function exitEditMode() {
+        document.getElementById("editBtn").classList.remove("hidden");
+        document.getElementById("editActions").classList.add("hidden");
+        setViewMode("satellite");
+      }
+
+      function saveEdit() {
+        exitEditMode();
+        setViewMode("text");
+      }
+
+      function setCubeView() {
+        const view = document.getElementById("cubeViewSelect").value;
+        document.getElementById("x-label").innerText =
+          view === "main"
+            ? "Domains"
+            : view === "node"
+            ? "Files"
+            : "Files (super/cross)";
+        document.getElementById("y-label").innerText =
+          view === "main" ? "Nodes" : "Tags / ContextRef";
+        document.getElementById("z-label").innerText =
+          view === "main" ? "Files in Node" : "Tag content / Tags in Context";
+      }
+
+      loadFiles();
+    </script>
+  </body>
+</html>

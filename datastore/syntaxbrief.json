@@ -1,0 +1,22 @@
+{
+  "filename": "syntaxbrief",
+  "superparentTag": "syntax",
+  "tags": [
+    {
+      "type": "inline",
+      "name": "raw",
+      "content": "#x.domain.node.tagparent#`\"<tag content>\"`# — Full tag reference with explicit content inside backticks."
+    },
+    {
+      "type": "inline",
+      "name": "compressed",
+      "content": "#x.domain.node.tagparent#t.tag1,tag2# — Lightweight syntax for referencing multiple tags inside a known tagparent."
+    },
+    {
+      "type": "inline",
+      "name": "clarity",
+      "content": "Use raw format while defining new tag content. Use compressed form when reusing existing tags from another file."
+    }
+  ],
+  "content": "#s.syntax#t.raw#, #s.syntax#t.compressed#, and a tip → #s.syntax#t.clarity#."
+}
